@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Date Input Form</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<style>
+    #loader {
+        
+  display: none;
+}
+</style>
+<body>
+
+<div class="container mt-5">
+    <h4 class="text-center">Asteroids - Earth orbits</h4>
+    <div class="text-center" id="loader">
+        <div class="spinner-border" role="status">
+            <span class="sr-only">Loading...</span>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6 mb-4">
+        <h4 >Enter Start and End Dates</h4>
+        <form id="dateForm">
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="startDate">Start Date:</label>
+                    <input type="date" class="form-control" id="startDate" name="startDate" required>
+                </div>
+                <div class="form-group col-md-6">
+                    <label for="endDate">End Date:</label>
+                    <input type="date" class="form-control" id="endDate" name="endDate" required>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <canvas id="asteroidChart"></canvas>
+        </div>
+        <div class="col-md-6 mb-4">
+            <canvas id="asteroidSizeChart"></canvas>
+        </div>
+    </div>
+    <h3>Learn More</h3>
+    <table class="table" id="astrotable">
+        <thead>
+            <tr>
+            <th>Name</th>
+            <th>Link</th>
+            </tr>
+        </thead>
+        
+        <tbody>
+            
+        </tbody>
+    </table>
+
+ 
+</div>
+
+    <!-- Bootstrap and jQuery libraries -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+   
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    
+<script>
+    function populateTable(data) {
+            // Get the table body element
+            const tableBody = document.getElementById('astrotable').getElementsByTagName('tbody')[0];
+
+            // Clear existing table rows
+            tableBody.innerHTML = '';
+
+            // Iterate over each date in the data
+            Object.values(data).forEach(dateAsteroids => {
+                // Iterate over each asteroid for the date
+                dateAsteroids.forEach(asteroid => {
+                    // Create a new row
+                    const row = tableBody.insertRow();
+
+                    // Insert cells for name and link
+                    const nameCell = row.insertCell(0);
+                    const linkCell = row.insertCell(1);
+
+                    // Set the name
+                    nameCell.textContent = asteroid["Asteroids Name"];
+
+                    // Create the link
+                    const link = document.createElement('a');
+                    link.href = asteroid["learn More Nasa"];
+                    link.textContent = 'jet propulsion laboratory NASA';
+                    link.target = '_blank'; // Open in a new tab
+
+                    // Append the link to the link cell
+                    linkCell.appendChild(link);
+                });
+            });
+        }
+    function sizechart(datafromapi){
+        const asteroidData = datafromapi
+
+        // Process the data to get the average size of asteroids for each date
+        const labels = Object.keys(asteroidData);
+        const averageSizes = labels.map(date => {
+            const sizes = asteroidData[date].map(asteroid => asteroid.size.kilometers.estimated_diameter_max);
+            const sumSizes = sizes.reduce((a, b) => a + b, 0);
+            return sumSizes / sizes.length; // average size
+        });
+
+        // Set up the data for the chart
+        const data = {
+            labels: labels,
+            datasets: [{
+                label: 'Average Estimated Diameter (km)',
+                data: averageSizes,
+                fill: false,
+                borderColor: 'rgb(75, 192, 192)',
+                tension: 0.1
+            }]
+        };
+
+        // Configuration for the chart
+        const config = {
+            type: 'line',
+            data: data,
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        };
+        if (window.asteroidSizeChart instanceof Chart) {
+        window.asteroidSizeChart.destroy();
+        }
+        // Initialize the chart
+        const asteroidSizeChart = new Chart(
+            document.getElementById('asteroidSizeChart'),
+            config
+        );
+    }
+    function createchar(datafromtop){
+       
+// Your JSON data
+            const asteroidData = datafromtop
+
+            // Process the data to get the count of asteroids for each date
+            const labels = Object.keys(asteroidData);
+const asteroidCounts = labels.map(date => asteroidData[date].length);
+
+            // Set up the data for the chart
+            const data = {
+                labels: labels,
+            datasets: [{
+                label: 'Count of Asteroids',
+            data: asteroidCounts,
+            backgroundColor: 'rgba(0, 123, 255, 0.5)',
+            borderColor: 'rgba(0, 123, 255, 1)',
+            borderWidth: 1
+  }]
+};
+
+            // Configuration for the chart
+            const config = {
+                type: 'bar',
+            data: data,
+            options: {
+                scales: {
+                y: {
+                beginAtZero: true
+      }
+    }
+  }
+};          if (window.asteroidChart instanceof Chart) {
+            window.asteroidChart.destroy();
+}
+            // Initialize the chart
+            const asteroidChart = new Chart(
+            document.getElementById('asteroidChart'),
+            config
+            );
+        
+    }
+    function apicall(startdate,enddate){
+         // Replace with your desired end date
+        const apiKey = 'MTT4YSkdqTgXC9qoAYE56JIbHVUgUBpyrHKqgz1i';  // Replace with your actual NASA API key
+
+        const apiUrl = `http://127.0.0.1:8000/${startdate}/${enddate}`;
+
+        // Define the request headers
+
+
+        // Define the request parameters, such as method, headers, and body
+        const requestOptions = {
+            method: 'GET'
+
+        };
+        document.getElementById('loader').style.display = 'block';
+
+        // Make the fetch request
+        fetch(apiUrl, requestOptions)
+            .then(response => response.json())
+            .then(data => {
+                // Handle the response data here
+                console.log(data);
+                createchar(data)
+                sizechart(data)
+                populateTable(data)
+                    document.getElementById('loader').style.display = 'none';
+            })
+            .catch(error => {
+                // Handle errors here
+                console.error('Error:', error);
+            });
+
+
+    }
+
+
+    document.getElementById('dateForm').addEventListener('submit', function (event) {
+        event.preventDefault();
+
+        // Create an object to store the dates
+        var dateRange = {
+            startDate: document.getElementById('startDate').value,
+            endDate: document.getElementById('endDate').value
+        };
+        apicall(dateRange['startDate'], dateRange['endDate'])
+        // Log the object to the console (for demonstration purposes)
+        console.log(dateRange);
+
+        // Here you can use `dateRange` object for further processing
+    });
+</script>
+
+</html>
